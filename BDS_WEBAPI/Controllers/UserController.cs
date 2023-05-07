@@ -5,7 +5,7 @@ using MongoDB.Bson;
 
 namespace BDS_WEBAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api")]
     [ApiController]
     public class UserController : ControllerBase
     {
@@ -14,12 +14,12 @@ namespace BDS_WEBAPI.Controllers
         {
             userRespository = _I;
         }
-        [HttpGet]
-        public async Task<ActionResult<Users>> GetALL()
+        [HttpGet("users")]
+        public async Task<ActionResult<PagingResult<Users>>> GetALL(int page, int size)
         {
             try
             {
-                var myModel = await userRespository.GetAll();
+                var myModel = await userRespository.GetAll(page, size);
                 if (myModel == null)
                 {
                     return NotFound();
@@ -32,7 +32,7 @@ namespace BDS_WEBAPI.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
-        [HttpGet("Getbyid")]
+        [HttpGet("users/{id}")]
         public async Task<ActionResult<Users>> GetbyId(string id)//done
         {
             try
@@ -52,7 +52,7 @@ namespace BDS_WEBAPI.Controllers
                 return BadRequest(ex.Message);
             }
         }
-        [HttpGet("GetbyUsername")]
+        [HttpGet("user/{username}")]
         public async Task<ActionResult<Users>> GetbyUsername(string username)//done
         {
             try
@@ -70,7 +70,7 @@ namespace BDS_WEBAPI.Controllers
                 return BadRequest(ex.Message);
             }
         }
-        [HttpPost("Create")]
+        [HttpPost("user")]
         public async Task<ActionResult> Insert([FromBody] Users model)//done
         {
             try
@@ -79,6 +79,7 @@ namespace BDS_WEBAPI.Controllers
                 {
                     return BadRequest();
                 }
+                
                 // Kiểm tra xem đối tượng đã tồn tại trong cơ sở dữ liệu hay chưa
                 model._id = ObjectId.GenerateNewId().ToString();//tạo 1 id mới trong collection
                 if (await userRespository.Exits(model))
@@ -86,7 +87,7 @@ namespace BDS_WEBAPI.Controllers
                     return Conflict("The record already exists.");
                 }
                 // Thêm đối tượng vào cơ sở dữ liệu
-                await userRespository.Insert(model);
+                await userRespository.InsertMember(model);
                 return StatusCode(201, model);
             }
             catch (Exception ex)
@@ -94,7 +95,7 @@ namespace BDS_WEBAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-        [HttpPut]
+        [HttpPut("user")]
         public async Task<ActionResult> Update(string id,[FromBody] Users model)//done
         {
             try
@@ -129,7 +130,7 @@ namespace BDS_WEBAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-        [HttpDelete("Delete")]
+        [HttpDelete("user")]
         public async Task<ActionResult> Delete(string id)//done
         {
             try

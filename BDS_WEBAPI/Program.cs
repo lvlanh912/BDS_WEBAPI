@@ -14,6 +14,11 @@ builder.Services.AddScoped<IPropertiesRespository, PropertiesRespository>();
 builder.Services.AddScoped<ISessionRespository, SessionsRespository>();
 
 var app = builder.Build();
+app.UseCors(builder =>
+    builder.SetIsOriginAllowed(_ => true)
+        .AllowAnyMethod()
+        .AllowAnyHeader()
+        .AllowCredentials());
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

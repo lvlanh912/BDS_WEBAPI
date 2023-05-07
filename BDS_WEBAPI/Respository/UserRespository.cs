@@ -36,10 +36,17 @@ namespace BDS_WEBAPI.Respository
             return false;
         }
 
-        public async Task<IEnumerable<Users>> GetAll()
+        public async Task<PagingResult<Users>> GetAll(int pageindex, int pagesize)
         {
-            var a = await Users.Find(_ => true).ToListAsync();
-            return a;
+            var test= new PagingResult<Users>();
+            var ab = await Users.Find(_ => true).ToListAsync();
+            var result = ab.Skip(pageindex*pagesize).Take(pagesize).ToList();
+            test.Items = result;
+            test.PageIndex = pageindex;
+            test.PageSize = pagesize;
+            test.TotalCount=ab.Count;
+            //var a = await Users.Find(_ => true).ToListAsync();
+            return test;
         }
 
         public async Task<Users> GetbyId(string id)
@@ -51,8 +58,10 @@ namespace BDS_WEBAPI.Respository
             return await Users.Find(x => x.Username == username).FirstOrDefaultAsync();
         }
 
-        public async Task<Users> Insert(Users entity)
+        public async Task<Users> InsertMember(Users entity)
         {
+            entity.CreateDate = DateTime.Now;
+            entity.Role = 2;
             Users?.InsertOne(entity);
             return await Task.FromResult(entity);
         }

@@ -7,7 +7,7 @@ namespace BDS_WEBAPI.Model
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public string _id { get; set; }
+        public string? _id { get; set; }
         [BsonElement("Role")]
         public int Role { get; set; }
         [BsonElement("Username")]
