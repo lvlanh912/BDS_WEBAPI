@@ -36,19 +36,26 @@ namespace BDS_WEBAPI.Respository
             return false;
         }
 
-        public async Task<PagingResult<Users>> GetAll(int pageindex, int pagesize)
+        public async Task<PagingResult<Users>> GetAll(string? keywords,int pageindex, int pagesize)
         {
             var test= new PagingResult<Users>();
-            var ab = await Users.Find(_ => true).ToListAsync();
-            var result = ab.Skip(pageindex*pagesize).Take(pagesize).ToList();
-            test.Items = result;
+            List<Users> LUsers;
+            //filter
+            if (keywords == null)
+            {
+                LUsers = await Users.Find(_ => true).ToListAsync();
+            }
+            else
+            LUsers = await Users.Find(filter: e => e.Username.Contains(keywords) || e.Email.Contains(keywords) || e.Fullname.Contains(keywords)).ToListAsync();
+            test.TotalCount = LUsers.Count;
+            var result = LUsers.Skip((pageindex - 1) * pagesize);
+            test.Items = result.Take(pagesize);
             test.PageIndex = pageindex;
             test.PageSize = pagesize;
-            test.TotalCount=ab.Count;
+           
             //var a = await Users.Find(_ => true).ToListAsync();
             return test;
         }
-
         public async Task<Users> GetbyId(string id)
         {
             return await Users.Find(x => x._id ==id).FirstOrDefaultAsync();

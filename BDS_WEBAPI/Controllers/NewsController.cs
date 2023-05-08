@@ -7,15 +7,15 @@ namespace BDS_WEBAPI.Controllers
 {
     [Route("api")]
     [ApiController]
-    public class UserController : ControllerBase
+    public class NewsController : ControllerBase
     {
-        private readonly IUserRespository userRespository;
-        public UserController (IUserRespository _I)
+        private readonly INewsRespository newsRespository;
+        public NewsController (INewsRespository _I)
         {
-            userRespository = _I;
+            newsRespository = _I;
         }
-        [HttpGet("users")]
-        public async Task<ActionResult<PagingResult<Users>>> GetALL(string? keyword,int page, int size)
+        [HttpGet("news")]
+        public async Task<ActionResult<PagingResult<News>>> GetALL(string? keyword,int page, int size)
         {
             try
             {
@@ -23,7 +23,7 @@ namespace BDS_WEBAPI.Controllers
                 {
 
                 }
-                var myModel = await userRespository.GetAll(keyword,page, size);
+                var myModel = await newsRespository.GetAll(keyword,page, size);
                 if (myModel == null)
                 {
                     return NotFound();
@@ -36,12 +36,12 @@ namespace BDS_WEBAPI.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
-        [HttpGet("users/{id}")]
-        public async Task<ActionResult<Users>> GetbyId(string id)//done
+        [HttpGet("news/{id}")]
+        public async Task<ActionResult<News>> GetbyId(string id)//done
         {
             try
             {
-                var myModel = await userRespository.GetbyId(id);
+                var myModel = await newsRespository.GetbyId(id);
 
                 if (myModel == null)
                 {
@@ -56,26 +56,8 @@ namespace BDS_WEBAPI.Controllers
                 return BadRequest(ex.Message);
             }
         }
-        [HttpGet("user/{username}")]
-        public async Task<ActionResult<Users>> GetbyUsername(string username)//done
-        {
-            try
-            {
-                var myModel = await userRespository.GetbyUsername(username);
-                if (myModel == null)
-                {
-                    return NotFound();
-                }
-                return Ok(myModel);
-            }
-            catch (Exception ex)
-            {
-                // Xử lý lỗi, ví dụ ghi log, trả về mã lỗi 500 Internal Server Error
-                return BadRequest(ex.Message);
-            }
-        }
-        [HttpPost("user")]
-        public async Task<ActionResult> Insert([FromBody] Users model)//done
+        [HttpPost("news")]
+        public async Task<ActionResult> Insert([FromBody] News model)//done
         {
             try
             {
@@ -85,13 +67,10 @@ namespace BDS_WEBAPI.Controllers
                 }
                 // Kiểm tra xem đối tượng đã tồn tại trong cơ sở dữ liệu hay chưa
                 model._id = ObjectId.GenerateNewId().ToString();//tạo 1 id mới trong collection
-                model.CreateDate = DateTime.Now;
-                if (await userRespository.Exits(model))
-                {
-                    return Conflict("The record already exists.");
-                }
+                model.Date_Public = DateTime.Now;
+                model.By = "admin";
                 // Thêm đối tượng vào cơ sở dữ liệu
-                await userRespository.InsertMember(model);
+                await newsRespository.Insert(model);
                 return StatusCode(201, model);
             }
             catch (Exception ex)
@@ -99,8 +78,8 @@ namespace BDS_WEBAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-        [HttpPut("user")]
-        public async Task<ActionResult> Update(string id,[FromBody] Users model)//done
+        [HttpPut("news")]
+        public async Task<ActionResult> Update(string id,[FromBody] News model)//done
         {
             try
             {
@@ -109,22 +88,19 @@ namespace BDS_WEBAPI.Controllers
                     return BadRequest();
                 }
                 // Kiểm tra xem đối tượng đã tồn tại trong cơ sở dữ liệu hay chưa
-                if (await userRespository.Exits(id))
+                if (await newsRespository.Exits(id))
                 {
                     model._id= id;
-                    var curent= await userRespository.GetbyId(id);//dữ liệu bản ghi hiện tại
-                    var newmodel = new Users()
+                    var curent= await newsRespository.GetbyId(id);//dữ liệu bản ghi hiện tại
+                    var newmodel = new News()
                     {
                         _id= id,
-                        Username=curent.Username,
-                        Email=model.Email??curent.Email,
-                        Phone=model.Phone??curent.Phone,
-                        Password=model.Password??curent.Password,
-                        CreateDate=curent.CreateDate,
-                        Fullname=model.Fullname??curent.Fullname,
-                        Role=curent.Role
+                        Title = model.Title ?? curent.Title,
+                        content =model.content?? curent.content,
+                        By=curent.By,
+                        Date_Public=curent.Date_Public
                     };
-                    await userRespository.Update(newmodel);
+                    await newsRespository.Update(newmodel);
                     return StatusCode(202);
                 }
                 return BadRequest();
@@ -134,7 +110,7 @@ namespace BDS_WEBAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-        [HttpDelete("user")]
+        [HttpDelete("news")]
         public async Task<ActionResult> Delete(string id)//done
         {
             try
@@ -143,15 +119,12 @@ namespace BDS_WEBAPI.Controllers
                 {
                     return BadRequest();
                 }
-                var Sinhvien = new Users();
-                Sinhvien._id = id;
                 // Kiểm tra xem đối tượng đã tồn tại trong cơ sở dữ liệu hay chưa
-                if (await userRespository.Exits(Sinhvien))
+                if (await newsRespository.Exits(id))
                 {
-                    await userRespository.DeletebyId(id);
+                    await newsRespository.DeletebyId(id);
                     return Ok("deleted");
                 }
-
                 return NotFound();
             }
             catch (Exception ex)

@@ -7,7 +7,7 @@ namespace BDS_WEBAPI.Model
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public string _id { get; set; } = string.Empty;
+        public string? _id { get; set; }
         [BsonElement("Title")]
         public string? Title { get; set; }
         [BsonElement("Description")]
@@ -19,8 +19,9 @@ namespace BDS_WEBAPI.Model
         [BsonElement("Images")]
         public string? Images { get; set; }
         [BsonElement("Status")]
-        public int Status { get; set; }
+        public int? Status { get; set; }
         [BsonElement("CreateAt")]
         public DateTime? CreateAt { get; set; }
+        public IFormFile? File { get; set; }
     }
 }

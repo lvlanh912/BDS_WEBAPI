@@ -4,7 +4,7 @@ namespace BDS_WEBAPI.IRespository
 {
     public interface IUserRespository
     {
-        Task<PagingResult<Users>> GetAll(int pageindex, int pagesize);
+        Task<PagingResult<Users>> GetAll(string? keywords,int pageindex, int pagesize);
         Task<Users> GetbyId(string id);
         Task<Users> GetbyUsername(string id);
         Task DeletebyId(string id);

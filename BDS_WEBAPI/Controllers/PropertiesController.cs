@@ -7,15 +7,15 @@ namespace BDS_WEBAPI.Controllers
 {
     [Route("api")]
     [ApiController]
-    public class UserController : ControllerBase
+    public class PropertiesController : ControllerBase
     {
-        private readonly IUserRespository userRespository;
-        public UserController (IUserRespository _I)
+        private readonly IPropertiesRespository propertiesRespository;
+        public PropertiesController (IPropertiesRespository _I)
         {
-            userRespository = _I;
+            propertiesRespository = _I;
         }
-        [HttpGet("users")]
-        public async Task<ActionResult<PagingResult<Users>>> GetALL(string? keyword,int page, int size)
+        [HttpGet("properties")]//d
+        public async Task<ActionResult<PagingResult<Properties>>> GetALL(string? keyword,int page, int size)
         {
             try
             {
@@ -23,7 +23,7 @@ namespace BDS_WEBAPI.Controllers
                 {
 
                 }
-                var myModel = await userRespository.GetAll(keyword,page, size);
+                var myModel = await propertiesRespository.GetAll(keyword,page, size);
                 if (myModel == null)
                 {
                     return NotFound();
@@ -36,12 +36,12 @@ namespace BDS_WEBAPI.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
-        [HttpGet("users/{id}")]
-        public async Task<ActionResult<Users>> GetbyId(string id)//done
+        [HttpGet("properties/{id}")]//d
+        public async Task<ActionResult<Properties>> GetbyId(string id)//done
         {
             try
             {
-                var myModel = await userRespository.GetbyId(id);
+                var myModel = await propertiesRespository.GetbyId(id);
 
                 if (myModel == null)
                 {
@@ -56,26 +56,8 @@ namespace BDS_WEBAPI.Controllers
                 return BadRequest(ex.Message);
             }
         }
-        [HttpGet("user/{username}")]
-        public async Task<ActionResult<Users>> GetbyUsername(string username)//done
-        {
-            try
-            {
-                var myModel = await userRespository.GetbyUsername(username);
-                if (myModel == null)
-                {
-                    return NotFound();
-                }
-                return Ok(myModel);
-            }
-            catch (Exception ex)
-            {
-                // Xử lý lỗi, ví dụ ghi log, trả về mã lỗi 500 Internal Server Error
-                return BadRequest(ex.Message);
-            }
-        }
-        [HttpPost("user")]
-        public async Task<ActionResult> Insert([FromBody] Users model)//done
+        [HttpPost("properties")]
+        public async Task<ActionResult> Insert([FromForm] Properties model)//done
         {
             try
             {
@@ -83,24 +65,22 @@ namespace BDS_WEBAPI.Controllers
                 {
                     return BadRequest();
                 }
+              ///////////  string path= Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "config.txt");
                 // Kiểm tra xem đối tượng đã tồn tại trong cơ sở dữ liệu hay chưa
                 model._id = ObjectId.GenerateNewId().ToString();//tạo 1 id mới trong collection
-                model.CreateDate = DateTime.Now;
-                if (await userRespository.Exits(model))
-                {
-                    return Conflict("The record already exists.");
-                }
+                model.Status = 1;
+                model.CreateAt = DateTime.Now;
                 // Thêm đối tượng vào cơ sở dữ liệu
-                await userRespository.InsertMember(model);
-                return StatusCode(201, model);
+                await propertiesRespository.Insert(model);
+                return StatusCode(201);
             }
             catch (Exception ex)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-        [HttpPut("user")]
-        public async Task<ActionResult> Update(string id,[FromBody] Users model)//done
+        [HttpPut("properties")]
+        public async Task<ActionResult> Update(string id,[FromBody] Properties model)//done
         {
             try
             {
@@ -109,22 +89,23 @@ namespace BDS_WEBAPI.Controllers
                     return BadRequest();
                 }
                 // Kiểm tra xem đối tượng đã tồn tại trong cơ sở dữ liệu hay chưa
-                if (await userRespository.Exits(id))
+                if (await propertiesRespository.Exits(id))
                 {
                     model._id= id;
-                    var curent= await userRespository.GetbyId(id);//dữ liệu bản ghi hiện tại
-                    var newmodel = new Users()
+                    var curent= await propertiesRespository.GetbyId(id);//dữ liệu bản ghi hiện tại
+                    var newmodel = new Properties()
                     {
-                        _id= id,
-                        Username=curent.Username,
-                        Email=model.Email??curent.Email,
-                        Phone=model.Phone??curent.Phone,
-                        Password=model.Password??curent.Password,
-                        CreateDate=curent.CreateDate,
-                        Fullname=model.Fullname??curent.Fullname,
-                        Role=curent.Role
+                        _id = id,
+                        Title = model.Title ?? curent.Title,
+                        Address = model.Address ?? curent.Address,
+                        CreateAt = curent.CreateAt,
+                        Description=model.Description?? curent.Description,
+                        Status=model.Status?? curent.Status,
+                        Images=model.Images?? curent.Images,
+                        Price=model.Price??curent.Price
+
                     };
-                    await userRespository.Update(newmodel);
+                    await propertiesRespository.Update(newmodel);
                     return StatusCode(202);
                 }
                 return BadRequest();
@@ -134,7 +115,7 @@ namespace BDS_WEBAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-        [HttpDelete("user")]
+        [HttpDelete("properties")]//d
         public async Task<ActionResult> Delete(string id)//done
         {
             try
@@ -143,15 +124,12 @@ namespace BDS_WEBAPI.Controllers
                 {
                     return BadRequest();
                 }
-                var Sinhvien = new Users();
-                Sinhvien._id = id;
                 // Kiểm tra xem đối tượng đã tồn tại trong cơ sở dữ liệu hay chưa
-                if (await userRespository.Exits(Sinhvien))
+                if (await propertiesRespository.Exits(id))
                 {
-                    await userRespository.DeletebyId(id);
+                    await propertiesRespository.DeletebyId(id);
                     return Ok("deleted");
                 }
-
                 return NotFound();
             }
             catch (Exception ex)
