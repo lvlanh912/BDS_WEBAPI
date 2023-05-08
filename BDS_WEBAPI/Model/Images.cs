@@ -3,7 +3,7 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace BDS_WEBAPI.Model
 {
-    public class Properties
+    public class Image
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
@@ -22,6 +22,6 @@ namespace BDS_WEBAPI.Model
         public int? Status { get; set; }
         [BsonElement("CreateAt")]
         public DateTime? CreateAt { get; set; }
-
+        public IFormFile? File { get; set; }
     }
 }

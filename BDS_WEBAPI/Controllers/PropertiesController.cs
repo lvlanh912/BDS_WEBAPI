@@ -9,9 +9,13 @@ namespace BDS_WEBAPI.Controllers
     [ApiController]
     public class PropertiesController : ControllerBase
     {
+        private readonly IWebHostEnvironment?  host;
         private readonly IPropertiesRespository propertiesRespository;
-        public PropertiesController (IPropertiesRespository _I)
+
+        [Obsolete]
+        public PropertiesController (IPropertiesRespository _I, IWebHostEnvironment _host)
         {
+            this.host = _host;
             propertiesRespository = _I;
         }
         [HttpGet("properties")]//d
@@ -19,11 +23,7 @@ namespace BDS_WEBAPI.Controllers
         {
             try
             {
-                if(keyword != null)
-                {
-
-                }
-                var myModel = await propertiesRespository.GetAll(keyword,page, size);
+             var myModel = await propertiesRespository.GetAll(keyword,page, size);
                 if (myModel == null)
                 {
                     return NotFound();
@@ -35,6 +35,26 @@ namespace BDS_WEBAPI.Controllers
                 // Xử lý lỗi, ví dụ ghi log, trả về mã lỗi 500 Internal Server Error
                 return StatusCode(500, ex.Message);
             }
+        }
+        [HttpGet("images/{filename}")]
+        public  ActionResult Getimage(string filename)
+        {
+            try
+            {
+                string imagePath = host.ContentRootPath + "Upload\\PropertiesIMG\\" + filename;
+                if (!System.IO.File.Exists(imagePath))//nếu không tồn tại file ảnh
+                {
+                    return NotFound();
+
+                }
+                byte[] image= System.IO.File.ReadAllBytes(imagePath);
+                return  File(image, "image/*");
+            }
+            catch
+            {
+                return NotFound();
+            }
+          
         }
         [HttpGet("properties/{id}")]//d
         public async Task<ActionResult<Properties>> GetbyId(string id)//done
@@ -57,7 +77,7 @@ namespace BDS_WEBAPI.Controllers
             }
         }
         [HttpPost("properties")]
-        public async Task<ActionResult> Insert([FromForm] Properties model)//done
+        public async Task<ActionResult> Insert([FromForm] Image model)//done
         {
             try
             {
@@ -65,13 +85,28 @@ namespace BDS_WEBAPI.Controllers
                 {
                     return BadRequest();
                 }
-              ///////////  string path= Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "config.txt");
+               
                 // Kiểm tra xem đối tượng đã tồn tại trong cơ sở dữ liệu hay chưa
-                model._id = ObjectId.GenerateNewId().ToString();//tạo 1 id mới trong collection
-                model.Status = 1;
-                model.CreateAt = DateTime.Now;
+                if (!model.File.ContentType.StartsWith("image/"))
+                {
+                    //không phải là ảnh 
+                    return BadRequest();           
+                }
+                //lưu ảnh
+                model._id = ObjectId.GenerateNewId().ToString();
+                string filename = model._id + Path.GetExtension(model.File.FileName);
+                string path = Path.Combine(host.ContentRootPath+"Upload\\PropertiesIMG\\",filename);
+                using (var stream = new FileStream(path, FileMode.Create))
+                {
+                    await model.File.CopyToAsync(stream);
+                }
+                model.File = null;
                 // Thêm đối tượng vào cơ sở dữ liệu
-                await propertiesRespository.Insert(model);
+                await propertiesRespository.Insert(new Properties()
+                {
+                    _id=model._id,Title = model.Title,Description=model.Description,Address=model.Address,CreateAt=DateTime.Now,Images= filename,
+                    Price=model.Price,Status=1
+                });
                 return StatusCode(201);
             }
             catch (Exception ex)
@@ -101,7 +136,7 @@ namespace BDS_WEBAPI.Controllers
                         CreateAt = curent.CreateAt,
                         Description=model.Description?? curent.Description,
                         Status=model.Status?? curent.Status,
-                        Images=model.Images?? curent.Images,
+                        Images=curent.Images,
                         Price=model.Price??curent.Price
 
                     };
@@ -114,6 +149,11 @@ namespace BDS_WEBAPI.Controllers
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
+        }
+
+       void SaveImage(byte img)
+        {
+
         }
         [HttpDelete("properties")]//d
         public async Task<ActionResult> Delete(string id)//done
