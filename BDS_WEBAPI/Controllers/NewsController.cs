@@ -1,10 +1,12 @@
 ﻿using BDS_WEBAPI.IRespository;
 using BDS_WEBAPI.Model;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
 
 namespace BDS_WEBAPI.Controllers
 {
+    
     [Route("api")]
     [ApiController]
     public class NewsController : ControllerBase
@@ -19,16 +21,12 @@ namespace BDS_WEBAPI.Controllers
         {
             try
             {
-                if(keyword != null)
-                {
-
-                }
                 var myModel = await newsRespository.GetAll(keyword,page, size);
                 if (myModel == null)
                 {
                     return NotFound();
                 }
-                return Ok(myModel);
+                return Ok(new ResponseAPI<PagingResult<News>>(true,"success",myModel));
             }
             catch (Exception ex)
             {
@@ -36,11 +34,13 @@ namespace BDS_WEBAPI.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+        [Authorize(Roles = "admin")]
         [HttpGet("news/{id}")]
         public async Task<ActionResult<News>> GetbyId(string id)//done
         {
             try
             {
+                
                 var myModel = await newsRespository.GetbyId(id);
 
                 if (myModel == null)
@@ -56,6 +56,7 @@ namespace BDS_WEBAPI.Controllers
                 return BadRequest(ex.Message);
             }
         }
+        [Authorize(Roles = "admin")]//yêu cầu token của role admin
         [HttpPost("news")]
         public async Task<ActionResult> Insert([FromBody] News model)//done
         {

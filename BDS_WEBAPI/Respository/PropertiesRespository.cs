@@ -23,7 +23,7 @@ namespace BDS_WEBAPI.Respository
                 LUsers = await Properties.Find(_ => true).ToListAsync();
             }
             else
-                LUsers = await Properties.Find(filter: e => e.Title.Contains(keywords)).ToListAsync();
+                LUsers = await Properties.Find(filter: e => e.Title.Contains(keywords)||e.Address.Contains(keywords)||e._id.Contains(keywords)).ToListAsync();
             test.TotalCount = LUsers.Count;
             var result = LUsers.Skip((pageindex - 1) * pagesize);
             test.Items = result.Take(pagesize);
